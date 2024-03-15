@@ -52,8 +52,8 @@ import pyspark.pandas as ps
 
 USERNAME = os.environ["PROJECT_OWNER"]
 DBNAME = "LOGISTICS_MLOPS_MLFLOW"
-STORAGE = "s3a://goes-se-sandbox01"
-CONNECTION_NAME = "se-aw-mdl"
+STORAGE = "s3a://go01-demo/"
+CONNECTION_NAME = "go01-aw-dl"
 DATE = date.today()
 EXPERIMENT_NAME = "xgb-iot-fail-{0}".format(USERNAME)
 

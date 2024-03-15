@@ -177,8 +177,9 @@ def main():
 
     USERNAME = os.environ["PROJECT_OWNER"]
     DBNAME = "LOGISTICS_MLOPS_MLFLOW"
-    STORAGE = "s3a://goes-se-sandbox01"
-    CONNECTION_NAME = "se-aw-mdl"
+    STORAGE = "s3a://go01-demo/"
+    CONNECTION_NAME = "go01-aw-dl"
+
 
     # Instantiate BankDataGen class
     dg = IotDataGen(USERNAME, DBNAME, STORAGE, CONNECTION_NAME)
