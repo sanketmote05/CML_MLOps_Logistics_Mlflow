@@ -51,7 +51,7 @@ client.list_projects()
 
 projectId = os.environ['CDSW_PROJECT_ID']
 username = os.environ["PROJECT_OWNER"]
-experimentName = "xgboost-iot-fail-{0}-{1}".format(USERNAME, DATE)
+experimentName = "xgb-iot-fail-{}".format(username)
 
 experimentId = mlflow.get_experiment_by_name(experimentName).experiment_id
 runsDf = mlflow.search_runs(experimentId, run_view_type=1)
@@ -61,13 +61,10 @@ experimentRunId = runsDf.iloc[-1]['run_id']
 
 deployment = ModelDeployment(client, projectId, username, experimentName, experimentId)
 
-sessionId = secrets.token_hex(nbytes=4)
 modelPath = "artifacts"
-modelName = "IOTFailureClassifier-" + username + "-" + sessionId
+modelName = "IOTFailureClf-" + username
 
-registeredModelResponse = deployment.registerModelFromExperimentRun(modelName, experimentId, experimentRunId, modelPath, sessionId)
-projectCreationResponse = deployment.createPRDProject()
-apiResp = deployment.validatePRDProject(username)
+registeredModelResponse = deployment.registerModelFromExperimentRun(modelName, experimentId, experimentRunId, modelPath)
 
 prdProjId = projectCreationResponse.id
 modelId = registeredModelResponse.model_id

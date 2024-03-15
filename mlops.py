@@ -1,6 +1,12 @@
 """
 Utils to manage deployment of XGBoost classifier in CML
 """
+from __future__ import print_function
+from pprint import pprint
+import cmlapi
+from cmlapi.rest import ApiException
+from pprint import pprint
+import json, secrets, os, time
 
 class ModelDeployment():
     """
@@ -14,7 +20,7 @@ class ModelDeployment():
         self.experimentName = experimentName
         self.experimentId = experimentId
 
-    def registerModelFromExperimentRun(self, modelName, experimentId, experimentRunId, modelPath, sessionId):
+    def registerModelFromExperimentRun(self, modelName, experimentId, experimentRunId, modelPath):
         """
         Method to register a model from an Experiment Run
         This is an alternative to the mlflow method to register a model via the register_model parameter in the log_model method
@@ -22,7 +28,7 @@ class ModelDeployment():
         Output:
         """
 
-        model_name = 'wine_model_' + username + "-" + sessionId
+        model_name = 'wine_model_' + self.username
 
         CreateRegisteredModelRequest = {
                                         "project_id": os.environ['CDSW_PROJECT_ID'],
@@ -73,7 +79,7 @@ class ModelDeployment():
 
         return api_response
 
-    def createModel(self, projectId, modelName, modelId, description = "My Spark Clf"):
+    def createModel(self, projectId, modelName, modelId, description = "Enterprise AI"):
         """
         Method to create a model
         """

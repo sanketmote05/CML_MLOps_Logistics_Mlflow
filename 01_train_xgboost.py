@@ -55,7 +55,7 @@ DBNAME = "LOGISTICS_MLOPS_MLFLOW"
 STORAGE = "s3a://goes-se-sandbox01"
 CONNECTION_NAME = "se-aw-mdl"
 DATE = date.today()
-EXPERIMENT_NAME = "xgboost-iot-fail-{0}-{1}".format(USERNAME, DATE)
+EXPERIMENT_NAME = "xgb-iot-fail-{0}".format(USERNAME)
 
 mlflow.set_experiment(EXPERIMENT_NAME)
 
@@ -63,10 +63,10 @@ conn = cmldata.get_connection(CONNECTION_NAME)
 spark = conn.get_spark_session()
 
 df_from_sql = ps.read_table('{0}.IOT_FLEET_{1}'.format(DBNAME, USERNAME))
-df_from_sql = df_from_sql.select("iot_signal_1", "iot_signal_2", "iot_signal_3", "iot_signal_4")
+df_from_sql = df_from_sql[["iot_signal_1", "iot_signal_2", "iot_signal_3", "iot_signal_4", "iot_failure"]]
 df = df_from_sql.to_pandas()
 
-X_train, X_test, y_train, y_test = train_test_split(df.drop("predicted_failure", axis=1), df["predicted_failure"], test_size=0.3)
+X_train, X_test, y_train, y_test = train_test_split(df.drop("iot_failure", axis=1), df["iot_failure"], test_size=0.3)
 
 with mlflow.start_run():
 
