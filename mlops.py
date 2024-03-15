@@ -100,7 +100,7 @@ class ModelDeployment():
 
         return api_response
 
-    def createModelBuild(self, projectId, modelVersionId, modelCreationId):
+    def createModelBuild(self, projectId, modelVersionId, modelCreationId, runtimeId):
         """
         Method to create a Model build
         """
@@ -108,9 +108,10 @@ class ModelDeployment():
         # Create Model Build
         CreateModelBuildRequest = {
                                     "registered_model_version_id": modelVersionId,
-                                    "runtime_identifier": "docker.repository.cloudera.com/cloudera/cdsw/ml-runtime-workbench-python3.9-standard:2023.08.2-b8",
+                                    "runtime_identifier": runtimeId,
                                     "comment": "invoking model build",
-                                    "model_id": modelCreationId
+                                    "model_id": modelCreationId,
+                                    "disable_authentication": "True"
                                   }
 
         try:

@@ -66,19 +66,19 @@ modelName = "IOTFailureClf-" + username
 
 registeredModelResponse = deployment.registerModelFromExperimentRun(modelName, experimentId, experimentRunId, modelPath)
 
-prdProjId = projectCreationResponse.id
 modelId = registeredModelResponse.model_id
 modelVersionId = registeredModelResponse.model_versions[0].model_version_id
 
 registeredModelResponse.model_versions[0].model_version_id
 
-createModelResponse = deployment.createModel(prdProjId, modelName, modelId)
+createModelResponse = deployment.createModel(projectId, modelName, modelId)
 modelCreationId = createModelResponse.id
 
-createModelBuildResponse = deployment.createModelBuild(prdProjId, modelVersionId, modelCreationId)
+runtimeId = "docker.repository.cloudera.com/cloudera/cdsw/ml-runtime-workbench-python3.9-standard:2023.12.1-b8"
+createModelBuildResponse = deployment.createModelBuild(projectId, modelVersionId, modelCreationId, runtimeId)
 modelBuildId = createModelBuildResponse.id
 
-deployment.createModelDeployment(modelBuildId, prdProjId, modelCreationId)
+deployment.createModelDeployment(modelBuildId, projectId, modelCreationId)
 
 ## NOW TRY A REQUEST WITH THIS PAYLOAD!
 #{"dataframe_split": {"columns": ["iot_signal_1", "iot_signal_2", "iot_signal_3", "iot_signal_4"], "data":[[35.5, 200.5, 30.5, 14.5]]}}
