@@ -111,9 +111,8 @@ class ModelDeployment():
                                     "registered_model_version_id": modelVersionId,
                                     "runtime_identifier": runtimeId,
                                     "comment": "invoking model build",
-                                    "model_id": modelCreationId,
-                                    "disable_authentication": "True"
-                                  }
+                                    "model_id": modelCreationId
+                              }
 
         try:
             # Create a model build.
