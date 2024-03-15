@@ -51,11 +51,11 @@ import pyspark.pandas as ps
 
 
 USERNAME = os.environ["PROJECT_OWNER"]
-DBNAME = "LOGISTICS_MLOPS_DEMO"
+DBNAME = "LOGISTICS_MLOPS_MLFLOW"
 STORAGE = "s3a://goes-se-sandbox01"
 CONNECTION_NAME = "se-aw-mdl"
 DATE = date.today()
-EXPERIMENT_NAME = "xgboost-logistics-{0}-{1}".format(USERNAME, DATE)
+EXPERIMENT_NAME = "xgboost-iot-fail-{0}-{1}".format(USERNAME, DATE)
 
 mlflow.set_experiment(EXPERIMENT_NAME)
 
