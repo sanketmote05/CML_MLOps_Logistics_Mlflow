@@ -51,7 +51,7 @@ import pyspark.pandas as ps
 
 
 USERNAME = os.environ["PROJECT_OWNER"]
-DBNAME = "LOGISTICS_MLOPS_MLFLOW"
+DBNAME = "LOGISTICS_MLOPS_{}".format(USERNAME)
 STORAGE = "s3a://go01-demo/"
 CONNECTION_NAME = "go01-aw-dl"
 DATE = date.today()

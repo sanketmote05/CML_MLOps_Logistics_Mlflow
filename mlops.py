@@ -87,7 +87,7 @@ class ModelDeployment():
                                 "name" : modelName,
                                 "description": description,
                                 "registered_model_id": modelId,
-                                "disable_authentication": "True"
+                                "disable_authentication": True
                              }
 
         try:
