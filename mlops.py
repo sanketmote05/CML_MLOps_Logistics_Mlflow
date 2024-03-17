@@ -28,8 +28,6 @@ class ModelDeployment():
         Output:
         """
 
-        model_name = 'wine_model_' + self.username
-
         CreateRegisteredModelRequest = {
                                         "project_id": os.environ['CDSW_PROJECT_ID'],
                                         "experiment_id" : experimentId,

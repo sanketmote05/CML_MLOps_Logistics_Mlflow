@@ -176,7 +176,7 @@ class IotDataGen:
 def main():
 
     USERNAME = os.environ["PROJECT_OWNER"]
-    DBNAME = "LOGISTICS_MLOPS_MLFLOW"
+    DBNAME = "LOGISTICS_MLOPS_{}".format(USERNAME)
     STORAGE = "s3a://go01-demo/"
     CONNECTION_NAME = "go01-aw-dl"
 
