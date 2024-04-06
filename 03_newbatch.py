@@ -126,29 +126,6 @@ class IotDataGen:
         return spark
 
 
-    def createDatabase(self, spark):
-        """
-        Method to create database before data generated is saved to new database and table
-        """
-
-        spark.sql("CREATE DATABASE IF NOT EXISTS {}".format(self.dbname))
-
-        print("SHOW DATABASES LIKE '{}'".format(self.dbname))
-        spark.sql("SHOW DATABASES LIKE '{}'".format(self.dbname)).show()
-
-
-    def dropDatabase(self, spark):
-        """
-        Method to drop database used by previous demo run
-        """
-
-        print("SHOW DATABASES PRE DROP")
-        spark.sql("SHOW DATABASES").show()
-        spark.sql("DROP DATABASE IF EXISTS {} CASCADE;".format(self.dbname))
-        print("\nSHOW DATABASES AFTER DROP")
-        spark.sql("SHOW DATABASES").show()
-
-
     def createOrAppend(self, df):
         """
         Method to create or append data to the IOT DEVICES FLEET table
@@ -188,12 +165,6 @@ def main():
     spark = dg.createSparkConnection()
     df_desmoines = dg.dataGen(spark)
     df_desmoines = dg.addCorrelatedColumn(df_desmoines)
-
-    # Drop Spark Database if exists
-    dg.dropDatabase(spark)
-
-    # Create Spark Database
-    dg.createDatabase(spark)
 
     # Create Iceberg Table in Database
     dg.createOrAppend(df_desmoines)
