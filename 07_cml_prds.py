@@ -48,6 +48,8 @@ import seaborn as sns
 import sqlite3
 import cmlapi
 from src.api import ApiUtility
+from pandas import json_normalize
+
 
 # You can access all models with API V2
 client = cmlapi.default_client()
@@ -75,12 +77,41 @@ model_metrics = cdsw.read_metrics(
     model_crn=Model_CRN, model_deployment_crn=Deployment_CRN
 )
 
+# This is a handy way to unravel the dict into a big pandas dataframe
+metrics_df = json_normalize(model_metrics["metrics"])
+metrics_df.tail().T
 
+# Do some conversions & calculations on the raw metrics
+metrics_df["startTimeStampMs"] = pd.to_datetime(
+    metrics_df["startTimeStampMs"], unit="ms"
+)
+metrics_df["endTimeStampMs"] = pd.to_datetime(metrics_df["endTimeStampMs"], unit="ms")
+metrics_df["processing_time"] = (
+    metrics_df["endTimeStampMs"] - metrics_df["startTimeStampMs"]
+).dt.microseconds * 1000
 
+# Create plots for different tracked metrics
+sns.set_style("whitegrid")
+sns.despine(left=True, bottom=True)
 
+# Plot processing time
+time_metrics = metrics_df.dropna(subset=["processing_time"]).sort_values(
+    "startTimeStampMs"
+)
+sns.lineplot(
+    x=range(len(time_metrics)), y="processing_time", data=time_metrics, color="grey"
+)
 
+# Plot model accuracy drift over the simulated time period
+agg_metrics = metrics_df.dropna(subset=["metrics.accuracy"]).sort_values(
+    "startTimeStampMs"
+)
+sns.barplot(
+    x=list(range(1, len(agg_metrics) + 1)),
+    y="metrics.accuracy",
+    color="grey",
+    data=agg_metrics,
+)
 
 
 #cdsw.track_delayed_metrics({"final_label_2": 1}, '7e5ea3fe-61c0-488d-b1ad-6a8c3887555d')
-
-

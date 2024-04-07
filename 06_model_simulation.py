@@ -45,6 +45,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from cmlbootstrap import CMLBootstrap
 from pyspark.sql import SparkSession
+from sklearn.metrics import classification_report
 import cmlapi
 from src.api import ApiUtility
 import cml.data_v1 as cmldata
@@ -55,10 +56,12 @@ import datetime
 #               CREATE BATCH DATA
 #---------------------------------------------------
 
+# SET USER VARIABLES
 USERNAME = os.environ["PROJECT_OWNER"]
 DBNAME = "LOGISTICS_MLOPS_{}".format(USERNAME)
-STORAGE = "s3a://go01-demo/"
-CONNECTION_NAME = "go01-aw-dl"
+STORAGE = "s3a://eng-ml-weekly/eng-ml-int-env-aws-dl/"
+CONNECTION_NAME = "eng-ml-int-env-aws-dl"
+
 TODAY = datetime.date.today()
 
 # Instantiate BankDataGen class
@@ -78,34 +81,76 @@ project_id = os.environ["CDSW_PROJECT_ID"]
 client.list_models(project_id)
 
 # You can use an APIV2-based utility to access the latest model's metadata. For more, explore the src folder
-apiUtil = ApiUtility(project_id, USERNAME)
+apiUtil = ApiUtility()
 
 modelName = "IOTFailureClf-" + username
 
 Model_AccessKey = apiUtil.get_latest_deployment_details(model_name=modelName)["model_access_key"]
 Deployment_CRN = apiUtil.get_latest_deployment_details(model_name=modelName)["latest_deployment_crn"]
 
-import random
-import numpy as np
-
 def submitRequest(Model_AccessKey):
     """
     Method to create and send a synthetic request to Time Series Query Model
     """
 
-    randomInts = [random.randint(50,54) for i in range(4)]
-    record = '{"pattern": ""}'
+    record = '{"dataframe_split": {"columns": ["iot_signal_1", "iot_signal_2", "iot_signal_3", "iot_signal_4"]}}'
+    randomInts = [[random.uniform(1.01,500.01) for i in range(4)]]
     data = json.loads(record)
-    data["pattern"] = randomInts
+    data["dataframe_split"]["data"] = randomInts
     response = cdsw.call_model(Model_AccessKey, data)
 
     return response
 
+response_labels_sample = []
 percent_counter = 0
+percent_max = len(df)
+
+# This will randomly return True for input and increases the likelihood of returning
+# true based on `percent`
+def iotFailure(percent):
+    if random.random() < percent:
+        return 1
+    else:
+        return 0
 
 for i in range(1000):
   print("Added {} records".format(percent_counter)) if (
       percent_counter % 25 == 0
   ) else None
   percent_counter += 1
-  submitQuery(Model_AccessKey)
+  response = submitRequest(Model_AccessKey)
+  response_labels_sample.append(
+        {
+            "uuid": response["response"]["uuid"],
+            "response_label": response["response"]["prediction"],
+            "final_label": iotFailure(percent_counter / percent_max),
+            "timestamp_ms": int(round(time.time() * 1000)),
+        }
+    )
+
+
+# The "ground truth" loop adds the updated actual label value and an accuracy measure
+# every 100 calls to the model.
+for index, vals in enumerate(response_labels_sample):
+    print("Update {} records".format(index)) if (index % 50 == 0) else None
+    cdsw.track_delayed_metrics({"final_label": vals["final_label"]}, vals["uuid"])
+    if index % 1000 == 0:
+        start_timestamp_ms = vals["timestamp_ms"]
+        final_labels = []
+        response_labels = []
+    final_labels.append(vals["final_label"])
+    response_labels.append(vals["response_label"][0])
+    if index % 100 == 99:
+        print("Adding accuracy metric")
+        end_timestamp_ms = vals["timestamp_ms"]
+        accuracy = classification_report(
+            final_labels, response_labels, output_dict=True
+        )["accuracy"]
+        cdsw.track_aggregate_metrics(
+            {"accuracy": accuracy},
+            start_timestamp_ms,
+            end_timestamp_ms,
+            model_deployment_crn=Deployment_CRN,
+        )
+
+  

@@ -65,21 +65,26 @@ conn = cmldata.get_connection(CONNECTION_NAME)
 spark = conn.get_spark_session()
 
 # READ LATEST ICEBERG METADATA
-snapshot_id = spark.read.format("iceberg").load('{0}.IOT_FLEET_{1}'.format(DBNAME, USERNAME)).select("snapshot_id").tail(1)[0][0]
-committed_at = spark.read.format("iceberg").load('{0}.IOT_FLEET_{1}'.format(DBNAME, USERNAME)).select("committed_at").tail(1)[0][0].strftime('%m/%d/%Y')
-parent_id = spark.read.format("iceberg").load('{0}.IOT_FLEET_{1}'.format(DBNAME, USERNAME)).select("parent_id").tail(1)[0][0]
+snapshot_id = spark.read.format("iceberg").load('{0}.IOT_FLEET_{1}.snapshots'.format(DBNAME, USERNAME)).select("snapshot_id").tail(1)[0][0]
+committed_at = spark.read.format("iceberg").load('{0}.IOT_FLEET_{1}.snapshots'.format(DBNAME, USERNAME)).select("committed_at").tail(1)[0][0].strftime('%m/%d/%Y')
+parent_id = spark.read.format("iceberg").load('{0}.IOT_FLEET_{1}.snapshots'.format(DBNAME, USERNAME)).select("parent_id").tail(1)[0][0]
 
+incReadDf = spark.read\
+    .format("iceberg")\
+    .option("start-snapshot-id", parent_id)\
+    .option("end-snapshot-id", snapshot_id)\
+    .load("{0}.IOT_FLEET_{1}".format(DBNAME, USERNAME))
+
+incReadDf = incReadDf[["iot_signal_1", "iot_signal_2", "iot_signal_3", "iot_signal_4", "iot_failure"]]
+df = incReadDf.toPandas()
+
+# SET MLFLOW TAGS
 tags = {
   "iceberg_snapshot_id": snapshot_id,
   "iceberg_snapshot_committed_at": committed_at,
   "iceberg_parent_id": parent_id,
-  "row_count": training_df.count()
+  "row_count": df.count()
 }
-
-# READ DATA FROM ICEBERG TABLE
-df_from_sql = ps.read_table('{0}.IOT_FLEET_{1}'.format(DBNAME, USERNAME))
-df_from_sql = df_from_sql[["iot_signal_1", "iot_signal_2", "iot_signal_3", "iot_signal_4", "iot_failure"]]
-df = df_from_sql.to_pandas()
 
 # TRAIN TEST SPLIT DATA
 X_train, X_test, y_train, y_test = train_test_split(df.drop("iot_failure", axis=1), df["iot_failure"], test_size=0.3)
@@ -101,10 +106,10 @@ with mlflow.start_run():
     mlflow.log_param("recall", recall)
     mlflow.xgboost.log_model(model, artifact_path="artifacts")#, registered_model_name="my_xgboost_model"
     mlflow.set_tags(tags)
-    
+
 mlflow.end_run()
-    
-# MLFLOW CLIENT EXPERIMENT METADATA  
+
+# MLFLOW CLIENT EXPERIMENT METADATA
 def getLatestExperimentInfo(experimentName):
     """
     Method to capture the latest Experiment Id and Run ID for the provided experimentName

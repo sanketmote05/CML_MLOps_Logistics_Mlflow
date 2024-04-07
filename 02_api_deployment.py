@@ -64,7 +64,7 @@ deployment = ModelDeployment(client, projectId, username, experimentName, experi
 modelPath = "artifacts"
 modelName = "IOTFailureClf-" + username
 
-# HOLD FOR A MOMENT AND THEN RUN THE FOLLOWING 
+# HOLD FOR A MOMENT AND THEN RUN THE FOLLOWING
 registeredModelResponse = deployment.registerModelFromExperimentRun(modelName, experimentId, experimentRunId, modelPath)
 
 modelId = registeredModelResponse.model_id

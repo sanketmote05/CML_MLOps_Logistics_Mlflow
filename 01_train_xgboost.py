@@ -102,10 +102,10 @@ with mlflow.start_run():
     mlflow.log_param("recall", recall)
     mlflow.xgboost.log_model(model, artifact_path="artifacts")#, registered_model_name="my_xgboost_model"
     mlflow.set_tags(tags)
-    
+
 mlflow.end_run()
-    
-# MLFLOW CLIENT EXPERIMENT METADATA  
+
+# MLFLOW CLIENT EXPERIMENT METADATA
 def getLatestExperimentInfo(experimentName):
     """
     Method to capture the latest Experiment Id and Run ID for the provided experimentName

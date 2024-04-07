@@ -77,18 +77,16 @@ class IotDataGen:
             .withColumn("device_id", "string", format="0x%013x", baseColumn="internal_device_id")
             .withColumn("manufacturer", "string", values=manufacturers, baseColumn="internal_device_id", )
             .withColumn("model_ser", "integer", minValue=1, maxValue=11, baseColumn="device_id", baseColumnType="hash", omit=True, )
-            .withColumn("event_type", "string", values=["system ok", "system malfunction", "gas below 5%", "tires low"], random=True)
+            .withColumn("event_type", "string", values=["tank below 10%", "tank below 5%", "device error", "system malfunction"], random=True)
             .withColumn("event_ts", "timestamp", begin="2023-12-01 01:00:00", end="2023-12-01 23:59:00", interval="1 minute", random=False )
             .withColumn("longitude", "float", expr="rand() + -93.6295")
             .withColumn("latitude", "float", expr="rand() + 41.5949")
             .withColumn("iot_signal_1", "integer", minValue=1, maxValue=10, random=True)
             .withColumn("iot_signal_3", "integer", minValue=50, maxValue=55, random=True)
             .withColumn("iot_signal_4", "integer", minValue=100, maxValue=107, random=True)
-            .withColumn("iot_failure", "string", values=["0", "1"], weights=[9, 1], random=True)
         )
 
         df = iotDataSpec.build()
-        df = df.withColumn("iot_failure", df["iot_failure"].cast(IntegerType()))
 
         return df
 
@@ -126,7 +124,30 @@ class IotDataGen:
         return spark
 
 
-    def createOrAppend(self, df):
+    def createDatabase(self, spark):
+        """
+        Method to create database before data generated is saved to new database and table
+        """
+
+        spark.sql("CREATE DATABASE IF NOT EXISTS {}".format(self.dbname))
+
+        print("SHOW DATABASES LIKE '{}'".format(self.dbname))
+        spark.sql("SHOW DATABASES LIKE '{}'".format(self.dbname)).show()
+
+
+    def dropDatabase(self, spark):
+        """
+        Method to drop database used by previous demo run
+        """
+
+        print("SHOW DATABASES PRE DROP")
+        spark.sql("SHOW DATABASES").show()
+        spark.sql("DROP DATABASE IF EXISTS {} CASCADE;".format(self.dbname))
+        print("\nSHOW DATABASES AFTER DROP")
+        spark.sql("SHOW DATABASES").show()
+
+
+    def createOrReplace(self, df):
         """
         Method to create or append data to the IOT DEVICES FLEET table
         The table is used to simulate batches of new data
@@ -148,30 +169,3 @@ class IotDataGen:
         """
         print("SHOW TABLES FROM '{}'".format(self.dbname))
         spark.sql("SHOW TABLES FROM {}".format(self.dbname)).show()
-
-
-def main():
-
-    USERNAME = os.environ["PROJECT_OWNER"]
-    DBNAME = "LOGISTICS_MLOPS_{}".format(USERNAME)
-    STORAGE = "s3a://eng-ml-weekly/eng-ml-int-env-aws-dl/"
-    CONNECTION_NAME = "eng-ml-int-env-aws-dl"
-
-
-    # Instantiate BankDataGen class
-    dg = IotDataGen(USERNAME, DBNAME, STORAGE, CONNECTION_NAME)
-
-    # Create CML Spark Connection
-    spark = dg.createSparkConnection()
-    df_desmoines = dg.dataGen(spark)
-    df_desmoines = dg.addCorrelatedColumn(df_desmoines)
-
-    # Create Iceberg Table in Database
-    dg.createOrAppend(df_desmoines)
-
-    # Validate Iceberg Table Insert
-    spark.read.format("iceberg").load('{0}.IOT_FLEET_{1}.snapshots'.format(DBNAME, USERNAME)).show()
-
-
-if __name__ == '__main__':
-    main()
