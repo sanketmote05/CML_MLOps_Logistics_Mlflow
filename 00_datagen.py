@@ -177,8 +177,8 @@ def main():
 
     USERNAME = os.environ["PROJECT_OWNER"]
     DBNAME = "LOGISTICS_MLOPS_{}".format(USERNAME)
-    STORAGE = "s3a://goes-se-sandbox01"
-    CONNECTION_NAME = "se-aw-edl"
+    STORAGE = "s3a://go01-demo"
+    CONNECTION_NAME = "go01-aw-dl"
 
 
     # Instantiate BankDataGen class
