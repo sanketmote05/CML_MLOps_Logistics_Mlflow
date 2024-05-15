@@ -52,8 +52,8 @@ import pyspark.pandas as ps
 # SET USER VARIABLES
 USERNAME = os.environ["PROJECT_OWNER"]
 DBNAME = "LOGISTICS_MLOPS_{}".format(USERNAME)
-STORAGE = "s3a://eng-ml-weekly/eng-ml-int-env-aws-dl/"
-CONNECTION_NAME = "eng-ml-int-env-aws-dl"
+STORAGE = "s3a://goes-se-sandbox01"
+CONNECTION_NAME = "se-aw-edl"
 
 # SET MLFLOW EXPERIMENT NAME
 DATE = date.today()

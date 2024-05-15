@@ -59,8 +59,8 @@ import datetime
 # SET USER VARIABLES
 USERNAME = os.environ["PROJECT_OWNER"]
 DBNAME = "LOGISTICS_MLOPS_{}".format(USERNAME)
-STORAGE = "s3a://eng-ml-weekly/eng-ml-int-env-aws-dl/"
-CONNECTION_NAME = "eng-ml-int-env-aws-dl"
+STORAGE = "s3a://goes-se-sandbox01"
+CONNECTION_NAME = "se-aw-edl"
 
 TODAY = datetime.date.today()
 
@@ -152,5 +152,3 @@ for index, vals in enumerate(response_labels_sample):
             end_timestamp_ms,
             model_deployment_crn=Deployment_CRN,
         )
-
-  
