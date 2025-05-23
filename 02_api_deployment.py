@@ -44,20 +44,38 @@ from pprint import pprint
 import json, secrets, os, time
 import mlflow
 from mlops import ModelDeployment
+import logging
+import mlflow.entities
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 client = cmlapi.default_client()
-client.list_projects()
+client.list_projects()  # Added to verify connection
+logging.info("Successfully connected to CML API and listed projects.")
+
 
 projectId = os.environ['CDSW_PROJECT_ID']
 username = os.environ["PROJECT_OWNER"]
 experimentName = "xgb-iot-fail-{}".format(username)
 
-experimentId = mlflow.get_experiment_by_name(experimentName).experiment_id
-runsDf = mlflow.search_runs(experimentId, run_view_type=1)
+
+experiment = mlflow.get_experiment_by_name(experimentName)
+if experiment is None:
+    raise ValueError(f"Experiment '{experimentName}' not found.")
+experimentId = experiment.experiment_id
+logging.info(f"Experiment ID: {experimentId}")
+
+
+runsDf = mlflow.search_runs(experimentId, run_view_type=mlflow.entities.ViewType.ACTIVE_ONLY)
+if runsDf.empty:
+    raise ValueError(f"No runs found for experiment ID: {experimentId}")
 
 experimentId = runsDf.iloc[-1]['experiment_id']
 experimentRunId = runsDf.iloc[-1]['run_id']
+logging.info(f"Experiment Run ID: {experimentRunId}")
+
 
 deployment = ModelDeployment(client, projectId, username, experimentName, experimentId)
 
@@ -66,19 +84,37 @@ modelName = "IOTFailureClf-" + username
 
 # HOLD FOR A MOMENT AND THEN RUN THE FOLLOWING
 registeredModelResponse = deployment.registerModelFromExperimentRun(modelName, experimentId, experimentRunId, modelPath)
-
 modelId = registeredModelResponse.model_id
 modelVersionId = registeredModelResponse.model_versions[0].model_version_id
+logging.info(f"Registered Model ID: {modelId}, Model Version ID: {modelVersionId}")
+time.sleep(5)  # Give CML time to register the model version
 
-registeredModelResponse.model_versions[0].model_version_id
+
+
 createModelResponse = deployment.createModel(projectId, modelName, modelId)
 modelCreationId = createModelResponse.id
+logging.info(f"Model Creation ID: {modelCreationId}")
+time.sleep(5)  # Give CML time to create the model
+
+
+
 
 runtimeId = "docker.repository.cloudera.com/cloudera/cdsw/ml-runtime-workbench-python3.9-standard:2024.02.1-b4" #Modify as needed
 createModelBuildResponse = deployment.createModelBuild(projectId, modelVersionId, modelCreationId, runtimeId)
 modelBuildId = createModelBuildResponse.id
+logging.info(f"Model Build ID: {modelBuildId}")
+time.sleep(5)  # Give CML time to create the model build
 
-deployment.createModelDeployment(modelBuildId, projectId, modelCreationId)
+
+
+
+createDeploymentResponse = deployment.createModelDeployment(modelBuildId, projectId, modelCreationId)
+logging.info(f"Model Deployment creation initiated. Check CML UI for deployment status.")
+time.sleep(5)  # Give CML time to initiate the deployment
+
+
+
+print("Script completed.  Check CML UI for deployment status.")
 
 ## NOW TRY A REQUEST WITH THIS PAYLOAD!
 #{"dataframe_split": {"columns": ["iot_signal_1", "iot_signal_2", "iot_signal_3", "iot_signal_4"], "data":[[35.5, 200.5, 30.5, 14.5]]}}
